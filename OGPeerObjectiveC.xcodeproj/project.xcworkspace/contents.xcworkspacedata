@@ -2,6 +2,6 @@
 <Workspace
    version = "1.0">
    <FileRef
-      location = "self:OGPeerObjectiveC.xcodeproj">
+      location = "self:/Users/omarhussain/Projects/OGPeerObjectiveC/OGPeerObjectiveC.xcodeproj">
    </FileRef>
 </Workspace>

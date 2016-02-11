@@ -8,6 +8,8 @@
 
 #import <Foundation/Foundation.h>
 
-@interface OGPeerObjectiveC : NSObject
+#import "OGPeer.h"
+#import "OGDataConnection.h"
+#import "OGMediaConnection.h"
 
-@end
+
