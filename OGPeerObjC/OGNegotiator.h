@@ -15,6 +15,10 @@
  */
 @interface OGNegotiatorOptions : NSObject
 /**
+ *  @brief Local stream reference
+ */
+@property (nonatomic, assign) RTCMediaStream * localStream;
+/**
  *  @brief Is current negotiator originator
  */
 @property (nonatomic, assign) BOOL originator;
@@ -106,18 +110,19 @@
  *  @param connection Connection object
  */
 -(void)cleanup:(OGConnection *)connection;
+
 /**
- *  @brief Adds local audio stream to the media connection and sends
+ *  @brief Returns an initialized audio track
  *
- *  @return Initialized audio stream
+ *  @return Initialized audio track
  */
--(RTCMediaStream *)addLocalAudioStream;
+-(RTCAudioTrack *)addAudioTrack;
 /**
- *  @brief Adds local video stream to media connection and sends
+ *  @brief Returns an initialized video track
  *
  *  @param position Camera position
  *
- *  @return Initialized video stream
+ *  @return Initialized video track
  */
--(RTCMediaStream *)addLocalVideoStream:(AVCaptureDevicePosition)position;
+-(RTCVideoTrack *)addVideoTrack:(AVCaptureDevicePosition)position;
 @end

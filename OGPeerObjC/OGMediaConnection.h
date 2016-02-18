@@ -23,6 +23,11 @@
 - (void)connection:(OGMediaConnection *)connection onRemovedRemoteStream:(RTCMediaStream *)stream;
 - (void)connection:(OGMediaConnection *)connection onRemovedLocalStream:(RTCMediaStream *)stream;
 
+- (void)connection:(OGMediaConnection *)connection onAddedLocalAudioTrack:(RTCMediaStream *)stream;
+- (void)connection:(OGMediaConnection *)connection onRemovedLocalAudioTrack:(RTCMediaStream *)stream;
+
+- (void)connection:(OGMediaConnection *)connection onAddedLocalVideoTrack:(RTCMediaStream *)stream;
+- (void)connection:(OGMediaConnection *)connection onRemovedLocalVideoTrack:(RTCMediaStream *)stream;
 @end
 
 /**
@@ -44,21 +49,13 @@
  */
 @interface OGMediaConnection : OGConnection
 /**
- *  @brief Local audio stream
- */
-@property(nonatomic, strong) RTCMediaStream *localAudioStream;
-/**
  *  @brief Remote audio stream
  */
-@property(nonatomic, strong) RTCMediaStream *remoteAudioStream;
+@property(nonatomic, strong) RTCMediaStream *remoteStream;
 /**
  *  @brief Local video stream
  */
-@property(nonatomic, strong) RTCMediaStream *localVideoStream;
-/**
- *  @brief Remote video stream
- */
-@property(nonatomic, strong) RTCMediaStream *remoteVideoStream;
+@property(nonatomic, strong) RTCMediaStream *localStream;
 
 
 /**
@@ -79,8 +76,12 @@
  *  @param stream Stream object with audio/video tracks
  */
 - (void)removeStream:(RTCMediaStream *)stream;
-
-
+/**
+ *  @brief Adds
+ *
+ *  @param track <#track description#>
+ */
+-(void)addLocalTrack:(RTCMediaStreamTrack *)track;
 /**
  *  @brief Disable video stream to given peer
  *

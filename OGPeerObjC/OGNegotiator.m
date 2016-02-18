@@ -59,38 +59,32 @@
         // Add the stream.
         __block OGMediaConnection * conn  = (OGMediaConnection *)connection;
         OGMediaConnectionOptions * options = conn.options;
-        if(options.type == OGStreamTypeVideo || options.type == OGStreamTypeBoth) {
-            void (^addBlock)() =         ^{
-                DDLogDebug(@"Creating and adding video stream for connection %@",connection.identifier);
-                RTCMediaStream * stream = [self addLocalVideoStream:options.direction];
-                if(stream) {
-                    conn.localVideoStream = stream;
-                    [conn.peerConnection addStream: conn.localVideoStream];
-                }else
-                    DDLogWarn(@"Video stream was not created for connection %@",connection.identifier);
-            };
-            if(conn.localAudioStream) {
-                dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(4.0 * NSEC_PER_SEC)), dispatch_get_main_queue(), addBlock);
-            }else{
-                addBlock();
+        
+        
+        DDLogDebug(@"Creating and adding stream");
+        RTCMediaStream * stream =  [_factory mediaStreamWithLabel:@"OGAVSTR"];
+        
+        if(stream) {
+            conn.localStream = stream;
+            _options.localStream = stream;
+            if(options.type == OGStreamTypeBoth || options.type == OGStreamTypeAudio) {
+                RTCAudioTrack * localAudioTrack = [self addAudioTrack];
+                if(localAudioTrack)
+                    [conn addLocalTrack:localAudioTrack];
             }
-        }
-        if(options.type == OGStreamTypeAudio || options.type == OGStreamTypeBoth) {
-            void (^addBlock)() =         ^{
-                DDLogDebug(@"Creating and adding audio stream");
-                RTCMediaStream * stream =  [self addLocalAudioStream];
-                if(stream) {
-                    conn.localAudioStream = stream;
-                    [conn.peerConnection addStream:conn.localAudioStream];
-                }else
-                    DDLogWarn(@"Audio stream was not created for connection %@",connection.identifier);
-            };
-            if(conn.localVideoStream) {
-                dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(4.0 * NSEC_PER_SEC)), dispatch_get_main_queue(), addBlock);
-            }else{
-                addBlock();
+            if(options.type == OGStreamTypeBoth || options.type == OGStreamTypeVideo) {
+                RTCVideoTrack * localVideoTrack =  [self addVideoTrack:options.direction];;
+                if (localVideoTrack) {
+                    
+                    [conn addLocalTrack:localVideoTrack];
+                }
             }
-        }
+            [conn.peerConnection addStream:conn.localStream];
+        }else
+            DDLogWarn(@"Stream was not created for connection %@",connection.identifier);
+        
+        
+        
     }
     if (options.originator) {
         if (connection.type == OGConnectionTypeData) {
@@ -269,35 +263,13 @@
 
 
 
--(RTCMediaStream *)addStream:(AVCaptureDevicePosition)direction  {
-    RTCMediaStream* localStream = [_factory mediaStreamWithLabel:@"OGAVSTR"];
-    RTCAudioTrack * localAudioTrack = [self addAudioTrack];
-    if(localAudioTrack)
-        [localStream addAudioTrack:localAudioTrack];
-    RTCVideoTrack * localVideoTrack =  [self addVideoTrack:direction];;
-    if (localVideoTrack) {
-        localStream = [_factory mediaStreamWithLabel:@"OGVIDEOSTR"];
-        
-        [localStream addVideoTrack:localVideoTrack];
-    }
-    return localStream;
-}
--(RTCMediaStream *)addLocalAudioStream {
-    RTCMediaStream* localStream = [_factory mediaStreamWithLabel:@"OGAUDIOSTR"];
-    
-    RTCAudioTrack* localAudioTrack = nil;
-    
-    localAudioTrack = [self addAudioTrack];
-    if(localAudioTrack)
-        [localStream addAudioTrack:localAudioTrack];
-    return localStream;
-    
-    
-}
+
+
 -(RTCAudioTrack *)addAudioTrack {
     RTCAudioTrack* localAudioTrack = nil;
     
     localAudioTrack = [_factory audioTrackWithID:@"OGAUDIOSTR0"];
+    
     return localAudioTrack;
 }
 -(RTCVideoTrack *)addVideoTrack:(AVCaptureDevicePosition)direction {
@@ -322,16 +294,5 @@
 #endif
     return localVideoTrack;
 }
--(RTCMediaStream *)addLocalVideoStream:(AVCaptureDevicePosition)direction {
-    RTCMediaStream* localStream;
-    
-    RTCVideoTrack* localVideoTrack = nil;
-    localVideoTrack = [self addVideoTrack:direction];
-    if (localVideoTrack) {
-        localStream = [_factory mediaStreamWithLabel:@"OGVIDEOSTR"];
-        
-        [localStream addVideoTrack:localVideoTrack];
-    }
-    return localStream;
-}
+
 @end
