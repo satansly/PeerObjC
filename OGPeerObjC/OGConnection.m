@@ -11,6 +11,8 @@
 #import "OGNegotiator.h"
 
 @implementation OGConnection
+@synthesize peerConnection = _peerConnection, open = _open, identifier = _identifier, label = _label, metadata = _metadata, peer = _peer, serialization = _serialization, negotiator = _negotiator, options = _options, provider = _provider;
+
 -(instancetype)init __attribute__((unavailable("Init method is not a supported for OGConnection. Use OGConnection subclass"))){
     self = [super init]; __weak typeof(self) weakSelf = self;
     [self on:@"error" callback:^(NSError * error) {
