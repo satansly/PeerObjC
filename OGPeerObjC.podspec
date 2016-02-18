@@ -17,10 +17,10 @@ Pod::Spec.new do |s|
 
   s.name         = "OGPeerObjC"
   s.version      = "0.0.1"
-  s.summary      = "A short description of OGPeerObjC."
+  s.summary      = "peerJS port in Objective-C. webRTC client to connect to peerjs-server."
 
   s.description  = <<-DESC
-                   A longer description of OGPeerObjC in Markdown format.
+                   peerJS port in Objective-C. webRTC client to connect to peerjs-server.
 
                    * Think: Why did you write this? What is the focus? What does it do?
                    * CocoaPods will be using this to generate tags, and improve search results.
@@ -94,7 +94,7 @@ Pod::Spec.new do |s|
   s.source_files  = "OGPeerObjC", "OGPeerObjC/**/*.{h,m}"
   #s.exclude_files = "Classes/Exclude"
 
-  # s.public_header_files = "Classes/**/*.h"
+   s.public_header_files = "OGPeerObjC/OGPeerObjC.h"
 
 
   # ――― Resources ―――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――― #
