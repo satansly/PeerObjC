@@ -50,7 +50,7 @@
         _metadata = _options.metadata;
         
         _identifier = (_options.connectionId) ? _options.connectionId :[NSString stringWithFormat:@"%@%@",[OGMediaConnection identifierPrefix],[[OGUtil util] randomToken]];
-        
+        [self initialize];
     }
     return self;
 }
