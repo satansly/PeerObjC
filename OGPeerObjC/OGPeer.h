@@ -18,6 +18,9 @@
 #import "RTCDataChannel.h"
 #import "RTCPeerConnection.h"
 #import "RTCICEServer.h"
+#import "OGDelegateDispatcher.h"
+#import <CocoaLumberjack/CocoaLumberjack.h>
+
 
 @class OGPeer;
 @class OGPeerConfig;
@@ -28,6 +31,16 @@
 @class OGDataConnectionOptions;
 @class OGConnection;
 @class OGMessage;
+
+@protocol OGPeerDelegate<NSObject>
+-(void)peerDidOpen:(OGPeer *)peer;
+-(void)peer:(OGPeer *)peer didReceiveError:(NSError *)error;
+-(void)peer:(OGPeer *)peer didReceiveCall:(OGMediaConnection *)connection;
+-(void)peer:(OGPeer *)peer didReceiveConnection:(OGDataConnection *)connection;
+-(void)peerDidClose:(OGPeer *)peer;
+-(void)peer:(OGPeer *)peer didDisconnectPeer:(NSString *)identifier;
+@end
+
 
 /**
  *  @brief Options associated with a peer object at the time of initalizing
@@ -104,7 +117,7 @@
 /**
  *  @brief Manages peers and peer connections.
  */
-@interface OGPeer : NSObject
+@interface OGPeer : OGDelegateDispatcher<SRWebSocketDelegate>
 /**
  *  @brief Identifier of this peer object
  */
@@ -144,6 +157,16 @@
  */
 -(instancetype)initWithId:(NSString *)identifier options:(OGPeerOptions *)options;
 /**
+ *  @brief Initalizes peer object with given identifier and options
+ *
+ *  @param identifier Identifier assigned to this peer object
+ *  @param options    Options used to initialize peer object
+ *  @param socket     Socket object
+ *
+ *  @return Initalized peer object with given identifier and options
+ */
+-(instancetype)initWithId:(NSString *)identifier options:(OGPeerOptions *)options socket:(SRWebSocket *)socket;
+/**
  *  @brief Connects to the given peer and connection options
  *
  *  @param peer    Peer identifier
@@ -152,7 +175,10 @@
  *  @return Initialized instance of data connection
  */
 -(OGDataConnection *)connect:(NSString *)peer options:(OGDataConnectionOptions *)options;
-
+/**
+ *  @brief Call method to initialize socket and handlers for socket
+ */
+-(void)initializeServerConnection;
 /**
  *  @brief Connects call to given peer and connection options
  *
@@ -190,31 +216,6 @@
  */
 -(NSArray *)getMessages:(NSString *)peer;
 
-/**
- *  @brief Disable video stream to given peer
- *
- *  @param peer Peer identifier
- */
--(void)disableVideo:(NSString *)peer;
-/**
- *  @brief Disable audio stream to given peer
- *
- *  @param peer Peer identifier
- */
--(void)disableAudio:(NSString *)peer;
-
-/**
- *  @brief Enable video stream to given peer
- *
- *  @param peer Peer identifier
- */
--(void)enableVideo:(NSString *)peer;
-/**
- *  @brief Enable audio stream to given peer
- *
- *  @param peer Peer identifier
- */
--(void)enableAudio:(NSString *)peer;
 /**
  *  @brief Sends message to given connection
  *

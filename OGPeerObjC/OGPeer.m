@@ -22,7 +22,6 @@
 #define kDefaultKey @"peerjs"
 #define kWsURLTemplate @"%@://%@:%ld%@/peerjs?key=%@&id=%@&token=%@"
 
-
 @implementation OGPeerConfig
 +(OGPeerConfig *)config {
     OGPeerConfig * config = [[OGPeerConfig alloc] init];
@@ -67,12 +66,19 @@
 @implementation OGPeerOptions
 
 @end
-@interface OGPeer ()<SRWebSocketDelegate>
+@interface OGPeer ()
 @property (nonatomic, strong) NSMutableDictionary * lostMessages;
 @property (nonatomic, strong) NSString * lastServerId;
 
 @end
 @implementation OGPeer
+-(instancetype)initWithId:(NSString *)identifier options:(OGPeerOptions *)options socket:(SRWebSocket *)socket {
+    self = [self initWithId:identifier options:options];
+    if(self) {
+        _socket = socket;
+    }
+    return self;
+}
 -(instancetype)initWithId:(NSString *)identifier options:(OGPeerOptions *)options {
     self = [super init];
     if(self) {
@@ -80,17 +86,25 @@
         
         // Configurize options
         _options = options;
-        
         OGUtil * util = [OGUtil util];
         
+        if(!_options.host)
+            _options.host = util.host;
+        if(!_options.port)
+            _options.port = util.port;
+        if(!_options.path)
+            _options.path = @"";
+        
         ddLogLevel = _options.debugLevel;
+        [DDLog addLogger:[DDASLLogger sharedInstance]];
+        [DDLog addLogger:[DDTTYLogger sharedInstance]];
+        DDFileLogger *fileLogger = [[DDFileLogger alloc] init];
+        fileLogger.rollingFrequency = 60 * 60 * 24; // 24 hour rolling
+        fileLogger.logFileManager.maximumNumberOfLogFiles = 7;
         
-        // Sanity checks
-        // Ensure WebRTC supported
+        [DDLog addLogger:fileLogger];
         
-        if (!util.supports.audioVideo && !util.supports.data ) {
-            [self delayedAbort:@"browser-incompatible"  message:@"The current browser does not support WebRTC"];
-        }
+        
         // Ensure alphanumeric id
         if (![util validateIdentifier:identifier]) {
             [self delayedAbort:@"invalid-id" message:[NSString stringWithFormat:@"ID '%@' is invalid",identifier]];
@@ -116,15 +130,7 @@
         _lostMessages = [NSMutableDictionary dictionary]; // src => [list of messages]
         //
         
-        // Start the server connection
         
-        if (identifier) {
-            [self initializeServerConnection];
-        } else {
-            [self retrieveId:^(NSString * identifier){
-                
-            }];
-        }
         [self setupObservers];
     }
     return self;
@@ -141,6 +147,16 @@
 // Initialize the 'socket' (which is actually a mix of XHR streaming and
 // websockets.)
 -(void)initializeServerConnection {
+    
+    
+    // Start the server connection
+    
+    if (!_identifier) {
+        [self retrieveId:^(NSString * identifier){
+            
+        }];
+        return;
+    }
     
     DDLogDebug(@"Initializing server connection");
     [self initialize:_identifier];
@@ -174,7 +190,7 @@
     NSData *data = [message dataUsingEncoding:NSUTF8StringEncoding];
     NSMutableDictionary *messageDict = [NSJSONSerialization JSONObjectWithData:data options:NSJSONReadingMutableContainers error:nil];
     OGMessage * messageobj = [[OGMessage alloc] initWithDictionary:messageDict];
-    DDLogDebug(@"Socket received data %@",[messageDict description]);
+    DDLogDebug(@"Socket received data %@",messageDict);
     [webSocket emit:@"message" data:messageobj];
 }
 
@@ -244,8 +260,11 @@
 /** Initialize a connection with the server. */
 -(void)initialize:(NSString *)identifier {
     DDLogDebug(@"Initializing connection with server");
-    _socket = [[SRWebSocket alloc] initWithURL:[self wsURL]];
-    _socket.delegate = self;
+    if(!_socket) {
+        _socket = [[SRWebSocket alloc] initWithURL:[self wsURL]];
+        _socket.delegate = self;
+        
+    }
     [_socket open];
 }
 
@@ -274,6 +293,7 @@
                     connection = [[OGMediaConnection alloc] initWithPeer:peer provider:self options:options];
                     [self addConnection:peer connection:connection];
                     [self emit:@"call"  data:connection];
+                    [self perform:@selector(peer:didReceiveCall:) withArgs:@[self,connection]];
                     [connection initialize];
                     
                 } else if (payload.type == OGConnectionTypeData) {
@@ -288,6 +308,7 @@
                     connection = [[OGDataConnection alloc] initWithPeer:peer provider:self options:options];
                     [self addConnection:peer connection:connection];
                     [self emit:@"connection" data:connection];
+                    [self perform:@selector(peer:didReceiveConnection:) withArgs:@[self,connection]];
                 } else {
                     DDLogWarn(@"Received malformed connection type: %@", [[OGUtil util] stringFromConnectionType:payload.type]);
                     return;
@@ -305,6 +326,7 @@
         case OGMessageTypeOpen: {
             DDLogDebug(@"Received open message");
             [self emit:@"open" data:_identifier];
+            [self perform:@selector(peerDidOpen:) withArgs:@[self]];
             [self drainMessages:payload.connectionId];
             _open = true;
             break;
@@ -322,7 +344,7 @@
             break;
         }
         case OGMessageTypeLeave: {
-            //util.log('Received leave message from', peer);
+            DDLogDebug(@"Received leave message from %@", peer);
             [self cleanupPeer:peer];
             break;
         }
@@ -380,6 +402,7 @@
     DDLogDebug(@"Sending message for connection: %@",connectionId);
     //TODO : Looks like send pending and received pending messages are getting mixed up here. FIX IT!
     if(_socket.readyState == SR_OPEN) {
+        DDLogDebug(@"Sending data %@",[message dictionary]);
         [_socket send:[message JSONData]];
     }else{
         NSMutableArray * messages = _lostMessages[connectionId];
@@ -491,7 +514,9 @@
 /** Emits a typed error message. */
 -(void)emitError:(NSString *)type error:(NSString *)error {
     DDLogError(@"Error: %@", error);
-    [self emit:@"error" data:[NSError errorWithLocalizedDescription:error]];
+    NSError * err = [NSError errorWithLocalizedDescription:error];
+    [self emit:@"error" data:err];
+    [self perform:@selector(peer:didReceiveError:) withArgs:@[self,err]];
 }
 
 
@@ -515,6 +540,7 @@
         }
     }
     [self emit:@"close"];
+    [self perform:@selector(peerDidClose:) withArgs:@[self]];
 };
 -(void)cleanupPeer:(NSString *)peer connection:(NSString *)connectionid {
     DDLogDebug(@"Closing connection %@ to peer %@",connectionid, peer);
@@ -535,6 +561,7 @@
         [((OGConnection *)connections[j]) close];
         [connections removeObjectAtIndex:j];
     }
+    
 };
 
 
@@ -547,8 +574,10 @@
             [_socket close];
         }
         [self emit:@"disconnected" data:_identifier];
+        [self perform:@selector(peer:didDisconnectPeer:) withArgs:@[self,_identifier]];
         _lastServerId = _identifier;
         _identifier = nil;
+        
     }
 }
 
@@ -567,7 +596,6 @@
     } else if (!_disconnected && !_open) {
         // Do nothing. We're still connecting the first time.
         DDLogError(@"In a hurry? We\'re still trying to make the initial connection!");
-        //util.error('In a hurry? We\'re still trying to make the initial connection!');
     } else {
         DDLogError(@"Peer '%@' cannot reconnect because it is not disconnected from the server!",_identifier);
         @throw [NSError errorWithLocalizedDescription:@"Peer '%@' cannot reconnect because it is not disconnected from the server!",_identifier];

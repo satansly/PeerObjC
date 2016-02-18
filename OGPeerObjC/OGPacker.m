@@ -8,6 +8,8 @@
 
 #import "OGPacker.h"
 #import "OGPackingUtils.h"
+#import "NSError+Extensions.h"
+
 @interface OGPacker ()
 @property (nonatomic, strong) NSMutableData * data;
 @end
@@ -230,7 +232,7 @@
 }
 
 -(void)pack_uint32:(UInt32)num {
-    DDLogDebug(@"Packing unsigned 32-bit integer %d",(UInt32)num);
+    DDLogDebug(@"Packing unsigned 32-bit integer %d",(unsigned int)num);
     UInt32 n = num & 0xffffffff;
     [self append:(UInt32)(n & 0xff000000) >> 24];
     [self append:(n & 0x00ff0000) >> 16];

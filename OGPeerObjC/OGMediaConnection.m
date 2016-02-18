@@ -13,6 +13,7 @@
 #import "OGMessage.h"
 #import <EventEmitter/EventEmitter.h>
 #import <AVFoundation/AVFoundation.h>
+
 @interface OGMediaConnectionOptions ()
 
 @end
@@ -69,32 +70,36 @@
     
 }
 -(void)addStream:(RTCMediaStream *)remoteStream {
-    //util.log('Receiving stream', remoteStream);
+    DDLogDebug(@"Receiving stream %@", [remoteStream description]);
     
     if (remoteStream.videoTracks.count > 0) {
         self.remoteVideoStream = remoteStream;
-        
     }
     if (remoteStream.audioTracks.count > 0) {
         self.remoteAudioStream = remoteStream;
         
     }
+    if(!(self.remoteAudioStream || self.remoteVideoStream))
+        [super emit:@"open" data:self];
     [self emit:@"stream" data:remoteStream]; // Should we call this `open`?
+    [self perform:@selector(connection:onAddedRemoteStream:) withArgs:@[self,remoteStream]];
+    
     
 };
 
 - (void)removeStream:(RTCMediaStream *)stream {
-    [self emit:@"removed_stream" data:stream]; // Should we call this `open`?
+    [self emit:@"removed_stream" data:stream];
+    [self perform:@selector(connection:onRemovedRemoteStream:) withArgs:@[self,stream]];
 }
 -(void)setLocalAudioStream:(RTCMediaStream *)localAudioStream {
     _localAudioStream = localAudioStream;
-    [self emit:@"local_audio_stream" data:localAudioStream];
-    
+    [self emit:@"added_local_audio_stream" data:localAudioStream];
+    [self perform:@selector(connection:onAddedLocalStream:) withArgs:@[self,localAudioStream]];
 }
 -(void)setLocalVideoStream:(RTCMediaStream *)localVideoStream {
     _localVideoStream = localVideoStream;
-    [self emit:@"local_video_stream" data:localVideoStream];
-    
+    [self emit:@"added_local_video_stream" data:localVideoStream];
+    [self perform:@selector(connection:onAddedLocalStream:) withArgs:@[self,localVideoStream]];
 }
 -(void)handleMessage:(OGMessage *)message {
     OGMessagePayload * payload = message.payload;
@@ -109,14 +114,14 @@
             [_negotiator handleCandidate:self ice:payload.candidate];
             break;
         default:
-            //util.warn('Unrecognized message type:', message.type, 'from peer:', this.peer);
+            DDLogWarn(@"Unrecognized message type: %ld from peer: %@", (long)message.type, self.peer);
             break;
     }
 }
 
 - (void)answer:(OGStreamType )streamtype {
     if (_localAudioStream || _localVideoStream) {
-        //util.warn('Local stream already exists on this MediaConnection. Are you answering a call twice?');
+        DDLogWarn(@"Local stream already exists on this MediaConnection. Are you answering a call twice?");
         return;
     }else{
         
@@ -142,35 +147,64 @@
  * Exposed functionality for users.
  */
 
-/** Allows user to close connection. */
--(void)close {
-    if (!_open) {
-        return;
-    }
-    _open = false;
-    [_negotiator cleanup:self];
-    [self emit:@"close"];
-    
-};
+
 +(NSString *)identifierPrefix {
     static NSString * prefix = @"mc_";
     return prefix;
 }
 
 -(void)deleteLocalAudioStream {
-    if (_localAudioStream != nil && _localAudioTrack != nil)
-        [_localAudioStream removeAudioTrack:_localAudioTrack];
+    if (_localAudioStream != nil) {
+        [self removeTracks:_localAudioStream];
+        [self emit:@"removed_local_audio_stream" data:_localAudioStream];
+        [self perform:@selector(connection:onRemovedLocalStream:) withArgs:@[self,_localAudioStream]];
+        _localAudioStream = nil;
+    }
+    
 }
 -(void)deleteLocalVideoStream {
-    if (_localVideoStream != nil && _localVideoTrack != nil)
-        [_localVideoStream removeVideoTrack:_localVideoTrack];
+    if (_localVideoStream != nil) {
+        [self removeTracks:_localVideoStream];
+        [self emit:@"removed_local_video_stream" data:_localVideoStream];
+        [self perform:@selector(connection:onRemovedLocalStream:) withArgs:@[self,_localVideoStream]];
+        _localVideoStream = nil;
+    }
 }
 -(void)deleteRemoteAudioStream {
-    if (_remoteAudioStream != nil && _remoteAudioTrack != nil)
-        [_remoteAudioStream removeAudioTrack:_remoteAudioTrack];
+    if (_remoteAudioStream != nil) {
+        [self removeTracks:_remoteAudioStream];
+        [self emit:@"removed_remote_video_stream" data:_remoteAudioStream];
+        _remoteAudioStream = nil;
+        
+    }
 }
 -(void)deleteRemoteVideoStream {
-    if (_remoteVideoStream != nil && _remoteVideoTrack != nil)
-        [_remoteVideoStream removeVideoTrack:_remoteVideoTrack];
+    if (_remoteVideoStream != nil) {
+        [self removeTracks:_remoteVideoStream];
+        [self emit:@"removed_remote_video_stream" data:_remoteVideoStream];
+        _remoteVideoStream = nil;
+    }
+}
+
+-(void)enableAudio {
+    [_negotiator addLocalAudioStream];
+}
+-(void)enableVideo {
+    [_negotiator addLocalVideoStream:((OGMediaConnectionOptions *)_options).direction];
+}
+-(void)disableAudio {
+    [self deleteLocalAudioStream];
+}
+-(void)disableVideo {
+    [self deleteLocalVideoStream];
+}
+-(void)removeTracks:(RTCMediaStream *)stream {
+    for(RTCVideoTrack * videoTrack in stream.videoTracks) {
+        [stream removeVideoTrack:videoTrack];
+    }
+    for(RTCAudioTrack * audioTrack in stream.audioTracks) {
+        [stream removeAudioTrack:audioTrack];
+    }
+    
 }
 @end

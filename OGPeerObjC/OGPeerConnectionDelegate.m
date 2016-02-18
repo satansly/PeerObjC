@@ -13,6 +13,8 @@
 #import "OGUtil.h"
 #import "OGNegotiator.h"
 
+
+
 @implementation OGPeerConnectionDelegate
 -(instancetype)initWithConnection:(OGConnection *)connection negotiator:(OGNegotiator *)negotiator {
     self = [super init];
@@ -75,7 +77,6 @@
 - (void)peerConnectionOnRenegotiationNeeded:(RTCPeerConnection *)peerConnection {
     DDLogDebug(@"Renegotiating needed for connection: %@",_connection.identifier);
     if (peerConnection.signalingState == RTCSignalingStable) {
-        [OGUtil util].supports.onnegotiationneeded = YES;
         if(_negotiator.options.originator) {
             [_negotiator makeOffer:_connection];
         }

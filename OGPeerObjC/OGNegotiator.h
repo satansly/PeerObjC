@@ -106,4 +106,18 @@
  *  @param connection Connection object
  */
 -(void)cleanup:(OGConnection *)connection;
+/**
+ *  @brief Adds local audio stream to the media connection and sends
+ *
+ *  @return Initialized audio stream
+ */
+-(RTCMediaStream *)addLocalAudioStream;
+/**
+ *  @brief Adds local video stream to media connection and sends
+ *
+ *  @param position Camera position
+ *
+ *  @return Initialized video stream
+ */
+-(RTCMediaStream *)addLocalVideoStream:(AVCaptureDevicePosition)position;
 @end

@@ -17,37 +17,89 @@
 
 @class OGNegotiatorOptions;
 @class OGMediaConnection;
-@protocol OGMediaConnectionDelegate <NSObject>
-- (void)connection:(OGMediaConnection *)connection onStream:(RTCMediaStream *)stream;
-- (void)connection:(OGMediaConnection *)connection onRemoteAudioTrack:(RTCAudioTrack *)track;
-- (void)connection:(OGMediaConnection *)connection onLocalAudioTrack:(RTCAudioTrack *)track;
-- (void)connection:(OGMediaConnection *)connection onRemoteVideTrack:(RTCVideoTrack *)track;
-- (void)connection:(OGMediaConnection *)connection onLocalVideTrack:(RTCVideoTrack *)track;
-- (void)connectionOnClose:(OGMediaConnection *)connection;
-- (void)connection:(OGMediaConnection *)connection onError:(NSError *)error;
+@protocol OGMediaConnectionDelegate <OGConnectionDelegate>
+- (void)connection:(OGMediaConnection *)connection onAddedRemoteStream:(RTCMediaStream *)stream;
+- (void)connection:(OGMediaConnection *)connection onAddedLocalStream:(RTCMediaStream *)stream;
+- (void)connection:(OGMediaConnection *)connection onRemovedRemoteStream:(RTCMediaStream *)stream;
+- (void)connection:(OGMediaConnection *)connection onRemovedLocalStream:(RTCMediaStream *)stream;
 
 @end
 
-
+/**
+ *  @brief Options object to initiate a media connection
+ */
 @interface OGMediaConnectionOptions : NSObject<OGConnectionOptions>
+/**
+ *  @brief Type of stream to initialize media connection with
+ */
 @property(nonatomic,assign) OGStreamType type;
+/**
+ *  @brief Camera direction to use
+ */
 @property(nonatomic,assign) AVCaptureDevicePosition direction;
 @end
 
-
+/**
+ *  @brief Media connection to use for streaming
+ */
 @interface OGMediaConnection : OGConnection
-@property(nonatomic, strong) RTCVideoTrack *localVideoTrack;
-@property(nonatomic, strong) RTCAudioTrack *localAudioTrack;
+/**
+ *  @brief Local audio stream
+ */
 @property(nonatomic, strong) RTCMediaStream *localAudioStream;
+/**
+ *  @brief Remote audio stream
+ */
 @property(nonatomic, strong) RTCMediaStream *remoteAudioStream;
-@property(nonatomic, strong) RTCVideoTrack *remoteVideoTrack;
-@property(nonatomic, strong) RTCAudioTrack *remoteAudioTrack;
+/**
+ *  @brief Local video stream
+ */
 @property(nonatomic, strong) RTCMediaStream *localVideoStream;
+/**
+ *  @brief Remote video stream
+ */
 @property(nonatomic, strong) RTCMediaStream *remoteVideoStream;
 
 
-
+/**
+ *  @brief Answers the offer to connect a media call
+ *
+ *  @param streamtype Type of stream to reply media call with
+ */
 - (void)answer:(OGStreamType )streamtype;
+/**
+ *  @brief Adds stream
+ *
+ *  @param stream Stream object with audio/video tracks
+ */
 - (void)addStream:(RTCMediaStream *)stream;
+/**
+ *  @brief Removes stream
+ *
+ *  @param stream Stream object with audio/video tracks
+ */
 - (void)removeStream:(RTCMediaStream *)stream;
+
+
+/**
+ *  @brief Disable video stream to given peer
+ *
+ */
+-(void)disableVideo;
+/**
+ *  @brief Disable audio stream to given peer
+ *
+ */
+-(void)disableAudio;
+
+/**
+ *  @brief Enable video stream to given peer
+ *
+ */
+-(void)enableVideo;
+/**
+ *  @brief Enable audio stream to given peer
+ *
+ */
+-(void)enableAudio;
 @end

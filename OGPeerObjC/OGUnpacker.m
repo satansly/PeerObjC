@@ -7,6 +7,7 @@
 //
 
 #import "OGUnpacker.h"
+
 @interface OGUnpacker ()
 @property (nonatomic, assign) int index;
 @property (nonatomic, strong) NSData * dataBuffer;
@@ -147,7 +148,7 @@
      bytes[2]) * 256 +
     bytes[3];
     _index += 4;
-    DDLogDebug(@"Unpacked unsigned 32-bit integer %d",uint32);
+    DDLogDebug(@"Unpacked unsigned 32-bit integer %d",(unsigned int)uint32);
     return uint32;
 }
 
@@ -204,7 +205,7 @@
 
 -(NSData *)unpack_raw:(uint)size {
     if ( _length < _index + size) {
-        DDLogError(@"BinaryPackFailure: index is out of range %d %d %lu",_index, size, _length);
+        DDLogError(@"BinaryPackFailure: index is out of range %d %d %lu",_index, size, (unsigned long)_length);
         @throw  [NSError errorWithLocalizedDescription:@"BinaryPackFailure: index is out of range %d %d %lu",_index, size, _length];
     }
     NSData * buf = [_dataBuffer subdataWithRange:NSMakeRange(_index, size) ];

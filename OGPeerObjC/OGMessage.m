@@ -10,6 +10,7 @@
 #import "OGUtil.h"
 #import "OGConnection.h"
 
+
 @interface OGMessagePayload ()
 @property (nonatomic, strong) NSMutableDictionary * innerDictionary;
 @end
@@ -33,7 +34,8 @@
 -(NSData *)JSONData {
     NSError * error;
     NSData * data = [NSJSONSerialization dataWithJSONObject:_innerDictionary options:NSJSONWritingPrettyPrinted error:&error];
-    DDLogError(@"Error occurred when coverting dictionary to JSON. %@",[error localizedDescription]);
+    if(error)
+        DDLogError(@"Error occurred when coverting dictionary to JSON. %@",[error localizedDescription]);
     NSAssert(error == nil, @"Error occurred when coverting dictionary to JSON. %@",[error localizedDescription]);
     return data;
 }
@@ -152,7 +154,10 @@
     _innerDictionary[@"dst"] = destination;
 }
 -(OGMessagePayload *)payload {
-    return [[OGMessagePayload alloc] initWithDictionary:_innerDictionary[@"payload"]];
+    NSMutableDictionary * innerDictionary =_innerDictionary[@"payload"];
+    if(innerDictionary)
+        return [[OGMessagePayload alloc] initWithDictionary:innerDictionary];
+    else return nil;
 }
 -(void)setPayload:(OGMessagePayload *)payload {
     _innerDictionary[@"payload"] = [NSJSONSerialization JSONObjectWithData:[payload JSONData] options:NSJSONReadingAllowFragments error:nil];
@@ -163,7 +168,8 @@
 -(NSData *)JSONData {
     NSError * error;
     NSData * data = [NSJSONSerialization dataWithJSONObject:_innerDictionary options:NSJSONWritingPrettyPrinted error:&error];
-    DDLogError(@"Error occurred when coverting dictionary to JSON. %@",[error localizedDescription]);
+    if(error)
+        DDLogError(@"Error occurred when coverting dictionary to JSON. %@",[error localizedDescription]);
     NSAssert(error == nil, @"Error occurred when coverting dictionary to JSON. %@",[error localizedDescription]);
     return data;
 }

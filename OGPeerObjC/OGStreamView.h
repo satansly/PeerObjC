@@ -26,5 +26,8 @@
  *  @return Instance of OGStreamView ready to be displayed in view hierarchy
  */
 -(instancetype)initWithStream:(RTCMediaStream *)stream;
+/**
+ *  @brief Resets renderers and views
+ */
 -(void)resetSession;
 @end

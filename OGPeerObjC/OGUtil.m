@@ -13,106 +13,8 @@
 #import "RTCMediaConstraints.h"
 #import "RTCPair.h"
 #import "NSString+Extensions.h"
+#import "OGPeerConnectionDelegate.h"
 
-@implementation OGUtilSupports
-
-+(OGUtilSupports *)supports {
-    OGUtilSupports * supports = [[OGUtilSupports alloc] init];
-    
-    supports.data = YES;
-    supports.audioVideo = YES;
-    
-    supports.binaryBlob = NO;
-    supports.sctp = NO;
-    supports.onnegotiationneeded = YES;
-    
-    RTCPeerConnectionFactory * factory = [[RTCPeerConnectionFactory alloc] init];
-    
-    RTCPeerConnection * pc;
-    RTCDataChannel * dc;
-    @try {
-        NSArray *optionalConstraints = @[
-                                         [[RTCPair alloc] initWithKey:@"DtlsSrtpKeyAgreement" value:@"true"]
-                                         ,[[RTCPair alloc] initWithKey:@"RtpDataChannels" value:@"true"]
-                                         ];
-        RTCMediaConstraints* constraints = [[RTCMediaConstraints alloc] initWithMandatoryConstraints:nil optionalConstraints:optionalConstraints];
-        pc = [factory peerConnectionWithICEServers:[[OGPeerConfig defaultConfig] iceServers] constraints:constraints delegate:nil];
-    } @catch (NSException * e) {
-        supports.data = false;
-        supports.audioVideo = false;
-    }
-    
-    if (supports.data) {
-        @try {
-            if(pc) {
-                dc = [pc createDataChannelWithLabel:@"_PEERJSTEST" config:nil];
-                if(dc.state == kRTCDataChannelStateOpen)
-                    [dc close];
-            }
-        } @catch (NSException * e) {
-            supports.data = false;
-        }
-    }
-    if(pc.signalingState == RTCSignalingStable)
-        [pc close];
-    
-    if (supports.data) {
-        // Binary test
-        @try {
-            //dc.binaryType = 'blob';
-            supports.binaryBlob = YES;
-        } @catch (NSException * e) {
-        }
-        NSArray *optionalConstraints = @[
-                                         [[RTCPair alloc] initWithKey:@"DtlsSrtpKeyAgreement" value:@"true"]
-                                         ];
-        // Reliable test.
-        RTCMediaConstraints* constraints = [[RTCMediaConstraints alloc] initWithMandatoryConstraints:nil optionalConstraints:optionalConstraints];
-        RTCPeerConnection * reliablePC = [factory peerConnectionWithICEServers:[[OGPeerConfig defaultConfig] iceServers] constraints:constraints delegate:nil];
-        @try {
-            RTCDataChannel * reliableDC = [reliablePC createDataChannelWithLabel:@"_PEERJSRELIABLETEST" config:nil];
-            supports.sctp = reliableDC.isReliable;
-            if(reliableDC.state == kRTCDataChannelStateOpen)
-                [reliableDC close];
-        } @catch (NSException * e) {
-        }
-        if(reliablePC.signalingState == RTCSignalingStable)
-            [reliablePC close];
-    }
-    
-    // FIXME: not really the best check...
-    if (supports.audioVideo) {
-        supports.audioVideo = [pc addStream:nil];
-    }
-    
-    // FIXME: this is not great because in theory it doesn't work for
-    // av-only browsers (?).
-    if (!supports.onnegotiationneeded && supports.data) {
-        // sync default check.
-        NSArray *optionalConstraints = @[
-                                         [[RTCPair alloc] initWithKey:@"DtlsSrtpKeyAgreement" value:@"true"]
-                                         ,[[RTCPair alloc] initWithKey:@"RtpDataChannels" value:@"true"]
-                                         ];
-        
-        RTCMediaConstraints* constraints = [[RTCMediaConstraints alloc] initWithMandatoryConstraints:nil optionalConstraints:optionalConstraints];
-        RTCPeerConnection * negotiationPC = [factory peerConnectionWithICEServers:[[OGPeerConfig defaultConfig] iceServers] constraints:constraints delegate:nil];
-        supports.onnegotiationneeded = YES;
-        RTCDataChannel * negotiationChannel = [negotiationPC createDataChannelWithLabel:@"_PEERJSNEGOTIATIONTEST" config:nil];
-        if(negotiationChannel.state == kRTCDataChannelStateOpen)
-            [negotiationChannel close];
-        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(1 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
-            if(negotiationPC.signalingState == RTCSignalingStable)
-                [negotiationPC close];
-        });
-    }
-    
-    
-    
-    return supports;
-    
-}
-
-@end
 @interface OGChunk ()
 @property (nonatomic, assign) int peerData;
 @end
@@ -124,7 +26,6 @@
 
 +(instancetype)util {
     OGUtil * util = [[OGUtil alloc] init];
-    util.supports = [OGUtilSupports supports];
     return util;
 }
 -(NSString *)randomToken {
@@ -139,7 +40,7 @@
         letter[i] = [self randomBetween:65 max:90];
     }
     NSString * randString = [[[NSString alloc] initWithCharacters:letter length:length] lowercaseString];
-    DDLogDebug(@"Random String : %@ of length: %ldld",randString,(long)len);
+    DDLogDebug(@"Random String : %@ of length: %ld",randString,(long)len);
     return randString;
 }
 - (NSInteger)randomBetween:(NSInteger)min max:(NSInteger)max

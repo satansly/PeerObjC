@@ -21,6 +21,9 @@
 #import "RTCICECandidate.h"
 #import "RTCVideoCapturer.h"
 #import <AVFoundation/AVFoundation.h>
+
+
+
 @interface OGNegotiatorOptions ()
 @end
 @implementation OGNegotiatorOptions
@@ -57,18 +60,25 @@
         OGMediaConnection * conn  = (OGMediaConnection *)connection;
         OGMediaConnectionOptions * options = conn.options;
         if(options.type == OGStreamTypeVideo || options.type == OGStreamTypeBoth) {
-            DDLogDebug(@"Creating and adding video stream");
-            conn.localVideoStream = [self addLocalVideoStream:options.direction];
-            [pc addStream:conn.localVideoStream];
+            DDLogDebug(@"Creating and adding video stream for connection %@",connection.identifier);
+            RTCMediaStream * stream = [self addLocalVideoStream:options.direction];
+            if(stream) {
+                conn.localVideoStream = stream;
+                [pc addStream: conn.localVideoStream];
+            }else
+                DDLogWarn(@"Video stream was not created for connection %@",connection.identifier);
         }
         if(options.type == OGStreamTypeAudio || options.type == OGStreamTypeBoth) {
             DDLogDebug(@"Creating and adding audio stream");
-            conn.localAudioStream = [self addLocalAudioStream];
-            [pc addStream:conn.localAudioStream];
+            RTCMediaStream * stream =  [self addLocalAudioStream];
+            if(stream) {
+                conn.localAudioStream = stream;
+                [pc addStream:conn.localAudioStream];
+            }else
+                DDLogWarn(@"Audio stream was not created for connection %@",connection.identifier);
             
         }
     }
-    OGUtil * util = [OGUtil util];
     if (options.originator) {
         if (connection.type == OGConnectionTypeData) {
             DDLogDebug(@"Creating data channel %@ with peer %@",connection.label,connection.peer);
@@ -80,7 +90,7 @@
         
         
     }
-    if (!util.supports.onnegotiationneeded) {
+    if (options.originator) {
         [self makeOffer:connection];
     } else {
         [self handleSDP:OGMessageTypeOffer connection:connection sdp:options.payload.sdp];
@@ -106,16 +116,13 @@
 - (RTCPeerConnection *)startPeerConnection:(OGConnection *)connection {
     
     DDLogDebug(@"Attempting to create new peer connection with peer %@ or type %@",connection.peer, connection.typeAsString);
-    OGUtil * util = [OGUtil util];
-    //NSString * identifier = [NSString stringWithFormat:@"%@%@",[OGNegotiator identifierPrefix],util.randomToken];
     NSArray *optionalConstraints = nil;
     
     
     
-    if (connection.type == OGConnectionTypeData && !util.supports.sctp) {
-        optionalConstraints = @[
-                                [[RTCPair alloc] initWithKey:@"DtlsSrtpKeyAgreement" value:@"true"]
-                                ];
+    if (connection.type == OGConnectionTypeData) {
+        optionalConstraints = @[]
+        ;
     } else if (connection.type == OGConnectionTypeMedia) {
         // Interop req for chrome.
         optionalConstraints = @[

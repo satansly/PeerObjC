@@ -38,6 +38,7 @@
 -(void)setStream:(RTCMediaStream *)stream {
     NSAssert(stream != nil,@"Stream object provided to stream view is nil");
     _stream = stream;
+    [self resetRendererViews];
     [self setupStream];
     
 }

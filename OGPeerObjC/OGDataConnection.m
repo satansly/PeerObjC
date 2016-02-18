@@ -13,6 +13,7 @@
 #import "NSString+Extensions.h"
 #import "OGPacker.h"
 #import "OGUnpacker.h"
+
 @interface OGDataConnectionOptions ()
 @property (nonatomic, assign) BOOL sctp;
 @end
@@ -72,7 +73,19 @@
         
         // For storing large data.
         _chunkedData = [NSMutableDictionary dictionary];
+        OGNegotiatorOptions * options = [[OGNegotiatorOptions alloc] init];
+        //options.pc =
+        if(_options.payload)
+            options.originator = NO;
+        else
+            options.originator = YES;
+        options.payload = _options.payload;
+        //options.sdp;
+        //options.pc;
         
+        _negotiator = [[OGNegotiator alloc] initWithOptions:options];
+        
+        [_negotiator startConnection:self options:options];
         
     }
     return self;
@@ -80,19 +93,7 @@
 
 - (void)initialize:(RTCDataChannel *)dc {
     DDLogDebug(@"Initializing data channel %@ for connection: %@",dc.label, _identifier);
-    OGNegotiatorOptions * options = [[OGNegotiatorOptions alloc] init];
-    //options.pc =
-    if(_options.payload)
-        options.originator = NO;
-    else
-        options.originator = YES;
-    options.payload = _options.payload;
-    //options.sdp;
-    //options.pc;
     
-    _negotiator = [[OGNegotiator alloc] init];
-    
-    [_negotiator startConnection:self options:options];
     self.dataChannel = dc;
     [self configureDataChannel];
 }
@@ -109,15 +110,15 @@
             
             break;
         case kRTCDataChannelStateOpen: {
-            //util.log('Data channel connection success');
+            DDLogDebug(@"Data channel connection success");
             _open = YES;
-            [self emit:@"open"];
-            //self.emit('open');
+            [super emit:@"open"];
+            [self perform:@selector(connectionOnOpen:) withArgs:@[self]];
             
         }
             break;
         case kRTCDataChannelStateClosed: {
-            //util.log('DataChannel closed for:', self.peer);
+            DDLogDebug(@"DataChannel closed for: %@", self.peer);
             [self close];
         }
             break;
@@ -137,7 +138,6 @@ didReceiveMessageWithBuffer:(RTCDataBuffer*)buffer {
 
 // Handles a DataChannel message.
 - (void)handleDataMessage:(RTCDataBuffer *)buffer {
-    OGUtil * util = [OGUtil util];
     id data;
     if (self.serialization == OGSerializationBinary || self.serialization == OGSerializationBinaryUTF8) {
         OGUnpacker * unpacker = [[OGUnpacker alloc] initWithData:buffer.data];
@@ -150,12 +150,6 @@ didReceiveMessageWithBuffer:(RTCDataBuffer*)buffer {
     }else{
         data = buffer.data;
     }
-    /*
-     data = <31746832 44696157 386a4244 54324657 6d 597831 38483159 46424939 51423947 49544366 4557396a 6a663862 4d 766557 34536b35 4d 376252 62626b43 376e5354 70323067 47436572 54573539 55476574 75417062 54566231 5658666e 334b5a4b 4d 764f 49 706b386a 4f 656b55 38484833 79543635 695238>;
-     n = 2;
-     "__peerData" = 1;
-     75 = 77;
-     */
     if ([data isKindOfClass:[NSDictionary class]] && data[@"__peerData"]) {
         NSDictionary * dict = (NSDictionary *)data;
         int ident = [dict[@"__peerData"] intValue];
@@ -177,23 +171,17 @@ didReceiveMessageWithBuffer:(RTCDataBuffer*)buffer {
         return;
     }
     
-    if(data)
+    if(data) {
         [self emit:@"data" data:data];
+        [self perform:@selector(connection:onData:) withArgs:@[self,data]];
+    }
 }
 
 /**
  * Exposed functionality for users.
  */
 
-/** Allows user to close connection. */
--(void)close {
-    if (!self.open) {
-        return;
-    }
-    _open = false;
-    [_negotiator cleanup:self];
-    [self emit:@"close"];
-}
+
 
 /** Allows user to send data. */
 - (void)send:(id)data {
@@ -251,7 +239,7 @@ didReceiveMessageWithBuffer:(RTCDataBuffer*)buffer {
             [_negotiator handleCandidate:self ice:payload.candidate];
             break;
         default:
-            //util.warn('Unrecognized message type:', message.type, 'from peer:', this.peer);
+            DDLogWarn(@"Unrecognized message type: %ld from peer: %@", (long)message.type, self.peer);
             break;
     }
 }

@@ -10,12 +10,20 @@
 #import "RTCPeerConnection.h"
 #import "OGCommon.h"
 #import "OGPeer.h"
+#import "OGDelegateDispatcher.h"
 #import <EventEmitter/EventEmitter.h>
 
 
 @class OGMessagePayload;
 @class OGNegotiator;
 @class OGMessage;
+
+@protocol OGConnectionDelegate <NSObject>
+
+- (void)connectionOnOpen:(OGConnection *)connection;
+- (void)connectionOnClose:(OGConnection *)connection;
+- (void)connection:(OGConnection *)connection onError:(NSError *)error;
+@end
 /**
  *  @brief Options associated with a connection object at the time of initalizing
  */
@@ -37,7 +45,7 @@
  */
 @property (nonatomic, strong) RTCMediaConstraints * constraints;
 @end
-@interface OGConnection : NSObject {
+@interface OGConnection : OGDelegateDispatcher {
 @protected
     OGConnectionType _type;
     NSString *_identifier;

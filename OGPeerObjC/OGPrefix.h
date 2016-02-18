@@ -12,7 +12,7 @@
 #import "NSError+Extensions.h"
 
 #if DEBUG
-static DDLogLevel ddLogLevel = DDLogLevelVerbose;
+static DDLogLevel ddLogLevel = DDLogLevelDebug;
 #else
 static DDLogLevel ddLogLevel = DDLogLevelWarning;
 #endif

@@ -11,38 +11,7 @@
 
 
 
-@interface OGUtilSupports : NSObject
-/**
- *  @brief Client supports audio/video
- */
-@property (nonatomic, assign) BOOL audioVideo;
-/**
- *  @brief Client supports data
- */
-@property (nonatomic, assign) BOOL data;
-/**
- *  @brief Client supports binaryblob
- */
-@property (nonatomic, assign) BOOL binaryBlob;
-/**
- *  @brief Client supports plain binary
- */
-@property (nonatomic, assign) BOOL binary;
-/**
- *  @brief Client supports reliable connection
- */
-@property (nonatomic, assign) BOOL reliable;
-/**
- *  @brief Client supports sctp
- */
-@property (nonatomic, assign) BOOL sctp;
-/**
- *  @brief Client supports onnegotiationneeded
- */
-@property (nonatomic, assign) BOOL onnegotiationneeded;
 
-+(OGUtilSupports *)supports;
-@end
 /**
  *  @brief Adds chunking capability of large objects
  */
@@ -69,10 +38,6 @@
  *  @brief Current browser(or client). In this case it is the iOS client
  */
 @property (nonatomic, strong) NSString * browser;
-/**
- *  @brief Capabilities supported by current client
- */
-@property (nonatomic, strong) OGUtilSupports * supports;
 /**
  *  @brief Logging level.
  */
