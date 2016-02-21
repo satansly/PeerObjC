@@ -50,11 +50,12 @@
         _metadata = _options.metadata;
         
         _identifier = (_options.connectionId) ? _options.connectionId :[NSString stringWithFormat:@"%@%@",[OGMediaConnection identifierPrefix],[[OGUtil util] randomToken]];
-        __weak typeof(self) weakSelf = self;
-        //Patched to cater for delegates
-        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(1.0 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
-            [weakSelf initialize];
-        });
+        if(!_options.payload) {
+            __weak typeof(self) weakSelf = self;
+            dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(1.0 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+                [weakSelf initialize];
+            });
+        }
     }
     return self;
 }
@@ -133,13 +134,18 @@
     }else{
         
     }
-    ((OGMediaConnectionOptions *)_options).direction = AVCaptureDevicePositionBack;
+    ((OGMediaConnectionOptions *)_options).type = streamtype;
+    ((OGMediaConnectionOptions *)_options).direction = AVCaptureDevicePositionFront;
     OGNegotiatorOptions * options = [[OGNegotiatorOptions alloc] init];
     //options.pc =
+    
     if(_options.payload)
         options.originator = NO;
     else
         options.originator = YES;
+    
+    options.payload = _options.payload;
+    _negotiator = [[OGNegotiator alloc] initWithOptions:options];
     [_negotiator startConnection:self options:options];
     
     // Retrieve lost messages stored because PeerConnection not set up.
@@ -216,5 +222,9 @@
         _remoteStream = nil;
     }
 }
-
+-(void)close {
+    [self deleteLocalVideoTracks];
+    [self deleteLocalAudioTracks];
+    [super close];
+}
 @end

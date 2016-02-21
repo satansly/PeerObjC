@@ -294,7 +294,6 @@
                     [self addConnection:peer connection:connection];
                     [self emit:@"call"  data:connection];
                     [self perform:@selector(peer:didReceiveCall:) withArgs:@[self,connection]];
-                    [connection initialize];
                     
                 } else if (payload.type == OGConnectionTypeData) {
                     DDLogDebug(@"Received a data connection from peer %@", peer);
@@ -422,7 +421,7 @@
     for(NSString * connectionId in _lostMessages.allKeys) {
         NSArray * messages = _lostMessages[connectionId];
         for (OGMessage *msg in messages) {
-            [_socket send:[msg JSONData]];
+            //[_socket send:[msg JSONData]];
         }
     }
 }

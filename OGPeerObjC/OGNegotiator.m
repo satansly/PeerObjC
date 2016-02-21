@@ -229,30 +229,27 @@
 }
 
 - (void)makeAnswer:(OGConnection *)connection {
+    __block OGConnection * conn = connection;
     RTCPeerConnection * pc = connection.peerConnection;
     OGSessionDescriptionDelegate * delegate = [[OGSessionDescriptionDelegate alloc] initWithConnection:connection negotiator:self];
     
-    [pc createAnswerWithDelegate:delegate constraints:connection.options.constraints];
     delegate.didCreateSessionDescription = ^(RTCPeerConnection * pc, RTCSessionDescription * sdp, NSError * error){
         if(!error) {
-            
         }else{
-            //TODO: webrtc error
             [connection emit:@"error" data:[NSError errorWithLocalizedDescription:error.localizedDescription]];
             DDLogError(@"Failed to create answer: %@",error.localizedDescription);
         }
     };
     delegate.didSetSessionDescription = ^(RTCPeerConnection * pc, RTCSessionDescription * sdp, NSError * error){
         if(!error) {
-            OGMessage * answer = [OGMessage answerWithConnection:connection];
-            [connection.provider send:answer connection:connection.identifier];
-            
+            OGMessage * answer = [OGMessage answerWithConnection:conn];
+            [connection.provider send:answer connection:conn.identifier];
         }else{
-            //TODO: webrtc error
             [connection emit:@"error" data:[NSError errorWithLocalizedDescription:error.localizedDescription]];
             DDLogError(@"Failed to set local description: %@",error.localizedDescription);
         }
     };
+    [pc createAnswerWithDelegate:delegate constraints:connection.options.constraints];
     
 }
 

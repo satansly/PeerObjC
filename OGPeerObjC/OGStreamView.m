@@ -38,8 +38,8 @@
 -(void)setStream:(RTCMediaStream *)stream {
     NSAssert(stream != nil,@"Stream object provided to stream view is nil");
     _stream = stream;
-    [self resetRendererViews];
-    [self setupStream];
+    [self removeRendererViews];
+    [self setupRendererViews];
     
 }
 
@@ -60,7 +60,6 @@
         if(videoTrack)
             [videoTrack addRenderer:_videoView];
     }else{
-        NSAssert(_stream.videoTracks.count > 0,@"Stream object has no video tracks");
         DDLogError(@"Stream object has no video tracks");
     }
 }
