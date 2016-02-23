@@ -23,7 +23,7 @@ Pod::Spec.new do |s|
    s.public_header_files = "OGPeerObjC/*.h"
    s.requires_arc = true
     s.dependency "SocketRocket", "~>0.4.2"
-    s.dependency "libjingle_peerconnection","~>11177.2.0"
+    s.dependency "libjingle_peerconnection"
     s.dependency "EventEmitter","~>0.1.3"
     s.dependency "CocoaLumberjack", "~>2.2.0"
 end
