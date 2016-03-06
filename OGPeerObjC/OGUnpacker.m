@@ -217,7 +217,8 @@
 }
 
 -(NSString *)unpack_string:(uint)size {
-    NSMutableString * str = [NSMutableString stringWithUTF8String:[[_dataBuffer subdataWithRange:NSMakeRange( _index, size)] bytes]];
+    NSData * subdata = [_dataBuffer subdataWithRange:NSMakeRange( _index, size)];
+    NSMutableString * str = [[NSMutableString  alloc] initWithData:subdata encoding:NSUTF8StringEncoding];
     _index += size;
     DDLogDebug(@"Unpacked string %@",str);
     return str;

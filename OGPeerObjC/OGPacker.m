@@ -61,16 +61,16 @@
                 [self pack_array:value];
             } else if ([value isKindOfClass:[NSData class]]) {
                 [self pack_bin:value];
+            } else if ([value isKindOfClass:[NSDictionary class]]) {
+                [self pack_object:value];
+            } else if ([value isKindOfClass:[NSDate class]]) {
+                [self pack_string:[value description]];
             } else if (strcmp([value objCType], @encode(char [])) == 0) {
                 char * arr;
                 NSValue * val = (NSValue *)value;
                 [val getValue:&arr];
                 NSData* dat = [NSData dataWithBytes:arr length:sizeof(arr)];
                 [self pack_bin:dat];
-            } else if ([value isKindOfClass:[NSDictionary class]]) {
-                [self pack_object:value];
-            } else if ([value isKindOfClass:[NSDate class]]) {
-                [self pack_string:[value description]];
             } else {
                 DDLogError(@"Type not yet supported");
                 @throw  [NSError errorWithLocalizedDescription:@"Type not yet supported"];

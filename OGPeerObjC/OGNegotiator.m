@@ -62,7 +62,7 @@
         
         
         DDLogDebug(@"Creating and adding stream");
-        RTCMediaStream * stream =  [_factory mediaStreamWithLabel:@"OGAVSTR"];
+        RTCMediaStream * stream =  [_factory mediaStreamWithLabel:[NSString stringWithFormat:@"OGAVSTR%d",rand()]];
         
         if(stream) {
             conn.localStream = stream;
@@ -128,7 +128,8 @@
     
     
     if (connection.type == OGConnectionTypeData) {
-        optionalConstraints = @[]
+        optionalConstraints = @[
+                                [[RTCPair alloc] initWithKey:@"DtlsSrtpKeyAgreement" value:@"true"]]
         ;
     } else if (connection.type == OGConnectionTypeMedia) {
         // Interop req for chrome.
@@ -265,7 +266,7 @@
 -(RTCAudioTrack *)addAudioTrack {
     RTCAudioTrack* localAudioTrack = nil;
     
-    localAudioTrack = [_factory audioTrackWithID:@"OGAUDIOSTR0"];
+    localAudioTrack = [_factory audioTrackWithID:[NSString stringWithFormat:@"OGAUDIOSTR%d",rand()]];
     
     return localAudioTrack;
 }
@@ -287,7 +288,7 @@
     RTCMediaConstraints *mediaConstraints = [OGPeerConfig defaultMediaConstraints];
     RTCVideoSource *videoSource = [_factory videoSourceWithCapturer:capturer
                                                         constraints:mediaConstraints];
-    localVideoTrack = [_factory videoTrackWithID:@"OGVIDEOSTR0" source:videoSource];
+    localVideoTrack = [_factory videoTrackWithID:[NSString stringWithFormat:@"OGVIDEOSTR%d",rand()] source:videoSource];
 #endif
     return localVideoTrack;
 }

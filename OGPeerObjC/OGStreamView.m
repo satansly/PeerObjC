@@ -45,8 +45,9 @@
 
 -(void)setupRendererViews {
     _videoView = [[RTCEAGLVideoView alloc] initWithFrame:self.bounds];
-    _videoView.backgroundColor = [UIColor blackColor];
+    _videoView.backgroundColor = [UIColor clearColor];
     _videoView.delegate = self;
+    _videoView.contentMode = UIViewContentModeScaleToFill;
     _videoView.transform = CGAffineTransformMakeScale(-1, 1);
     [self addSubview:_videoView];
     
@@ -57,6 +58,7 @@
 -(void)setupStream {
     if(_stream.videoTracks.count > 0) {
         RTCVideoTrack * videoTrack = _stream.videoTracks.firstObject;
+        videoTrack.delegate = self;
         if(videoTrack)
             [videoTrack addRenderer:_videoView];
     }else{
@@ -89,7 +91,7 @@
     if (videoView == _videoView) {
         _videoSize = size;
     } else {
-        NSParameterAssert(NO);
+        //NSParameterAssert(NO);
     }
     [self updateVideoViewLayout];
     [self emit:@"size_change" data:[NSValue valueWithCGSize:size]];
@@ -100,7 +102,10 @@
 - (void)mediaStreamTrackDidChange:(RTCMediaStreamTrack*)mediaStreamTrack {
     if(mediaStreamTrack.state == RTCTrackStateEnded || mediaStreamTrack.state == RTCTrackStateFailed) {
         DDLogDebug(@"Stream ended or failed. Resetting renderer view");
-        [self resetRendererViews];
+
+        dispatch_async(dispatch_get_main_queue(),^{
+            [self resetRendererViews];
+        });
     }
     [self emit:@"state_change"];
 }

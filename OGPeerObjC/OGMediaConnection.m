@@ -48,7 +48,7 @@
         _peer = peer;
         _provider = provider;
         _metadata = _options.metadata;
-        
+        _serialization = OGSerializationBinary;
         _identifier = (_options.connectionId) ? _options.connectionId :[NSString stringWithFormat:@"%@%@",[OGMediaConnection identifierPrefix],[[OGUtil util] randomToken]];
         if(!_options.payload) {
             __weak typeof(self) weakSelf = self;
@@ -80,8 +80,7 @@
     if (remoteStream.videoTracks.count > 0 || remoteStream.audioTracks.count > 0) {
         self.remoteStream = remoteStream;
     }
-    if(!self.remoteStream)
-        [super emit:@"open" data:self];
+    [super emit:@"open" data:self];
     [self emit:@"stream" data:remoteStream]; // Should we call this `open`?
     [self perform:@selector(connection:onAddedRemoteStream:) withArgs:@[self,remoteStream]];
     
@@ -89,12 +88,14 @@
 }
 
 -(void)addLocalTrack:(RTCMediaStreamTrack *)track {
-    if([track isKindOfClass:[RTCVideoTrack class]]) {
-        [self.localStream addVideoTrack:(RTCVideoTrack *)track];
-        [self perform:@selector(connection:onAddedLocalVideoTrack:) withArgs:@[self, _localStream]];
-    }else{
-        [self.localStream addAudioTrack:(RTCAudioTrack *)track];
-        [self perform:@selector(connection:onAddedLocalAudioTrack:) withArgs:@[self, _localStream]];
+    if(track){
+        if([track isKindOfClass:[RTCVideoTrack class]]) {
+            [self.localStream addVideoTrack:(RTCVideoTrack *)track];
+            [self perform:@selector(connection:onAddedLocalVideoTrack:) withArgs:@[self, _localStream]];
+        }else{
+            [self.localStream addAudioTrack:(RTCAudioTrack *)track];
+            [self perform:@selector(connection:onAddedLocalAudioTrack:) withArgs:@[self, _localStream]];
+        }
     }
 }
 
@@ -213,13 +214,13 @@
     
 }
 -(void)cleanupStreams {
-    if(_localStream.videoTracks.count == 0 && _localStream.audioTracks.count == 0) {
+    if(_localStream && _localStream.videoTracks.count == 0 && _localStream.audioTracks.count == 0) {
         [self perform:@selector(connection:onRemovedLocalStream:) withArgs:@[self,_localStream]];
-        _localStream = nil;
+        
     }
-    if(_remoteStream.videoTracks.count == 0 && _remoteStream.audioTracks.count == 0) {
+    if(_remoteStream && _remoteStream.videoTracks.count == 0 && _remoteStream.audioTracks.count == 0) {
         [self perform:@selector(connection:onRemovedRemoteStream:) withArgs:@[self,_remoteStream]];
-        _remoteStream = nil;
+        
     }
 }
 -(void)close {

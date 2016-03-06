@@ -421,7 +421,7 @@
     for(NSString * connectionId in _lostMessages.allKeys) {
         NSArray * messages = _lostMessages[connectionId];
         for (OGMessage *msg in messages) {
-            //[_socket send:[msg JSONData]];
+            [_socket send:[msg JSONData]];
         }
     }
 }
@@ -556,9 +556,10 @@
 -(void)cleanupPeer:(NSString *)peer {
     DDLogDebug(@"Closing connections to peer %@",peer);
     NSMutableArray * connections = _connections[peer];
-    for (int j = 0; j < connections.count; j++) {
-        [((OGConnection *)connections[j]) close];
-        [connections removeObjectAtIndex:j];
+    while (connections.count > 0) {
+        OGConnection * connection = connections.lastObject;
+        [connection close];
+        [connections removeLastObject];
     }
     
 };

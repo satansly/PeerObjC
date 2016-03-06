@@ -102,7 +102,7 @@
 }
 -(RTCICECandidate *)candidate {
     NSDictionary *candidateObj = _innerDictionary[@"candidate"];
-    return [[RTCICECandidate alloc] initWithMid: candidateObj[@"sdpMid"] index:[candidateObj[@"sdpMLineIndex"] integerValue] sdp: candidateObj[@"sdp"]];
+    return [[RTCICECandidate alloc] initWithMid: candidateObj[@"sdpMid"] index:[candidateObj[@"sdpMLineIndex"] integerValue] sdp: candidateObj[@"candidate"]];
 }
 -(void)setCandidate:(RTCICECandidate *)candidate {
     NSDictionary *candidateObj = @{@"sdpMLineIndex": @(candidate.sdpMLineIndex),
@@ -187,7 +187,6 @@
     payload.connectionId = connection.identifier;
     payload.metadata = connection.metadata;
     payload.sdp = connection.peerConnection.localDescription;
-    
     OGMessage * message = [[OGMessage alloc] init];
     message.type = OGMessageTypeOffer;
     message.source = connection.provider.identifier;
@@ -208,7 +207,6 @@
     payload.connectionId = connection.identifier;
     payload.metadata = connection.metadata;
     payload.sdp = connection.peerConnection.localDescription;
-    
     OGMessage * message = [[OGMessage alloc] init];
     message.type = OGMessageTypeAnswer;
     message.source = connection.provider.identifier;
@@ -225,7 +223,6 @@
     payload.type = connection.type;
     payload.connectionId = connection.identifier;
     payload.candidate = candidate;
-    
     OGMessage * message = [[OGMessage alloc] init];
     message.type = OGMessageTypeCandidate;
     message.source = connection.provider.identifier;

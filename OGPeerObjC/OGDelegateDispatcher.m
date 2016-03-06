@@ -17,7 +17,16 @@
     return self;
 }
 -(void)addDelegate:(NSObject *)delegate {
-    [_delegates addObject:[NSValue valueWithNonretainedObject:delegate]];
+    BOOL found = NO;
+    for(NSValue * delegateValue in _delegates) {
+        id<NSObject> _delegate = [delegateValue pointerValue];
+        if(delegate == _delegate) {
+            found = YES;
+            break;
+        }
+    }
+    if(!found)
+        [_delegates addObject:[NSValue valueWithNonretainedObject:delegate]];
 }
 -(void)removeDelegate:(NSObject *)delegate {
     NSValue * removeDelegate;
@@ -31,6 +40,7 @@
 }
 -(void)perform:(SEL)selector withArgs:(NSArray * )args {
     for(NSValue * delegateValue in self.delegates) {
+        if(delegateValue){
         NSObject * delegate = [delegateValue pointerValue];
         if([delegate respondsToSelector:selector]) {
             NSInvocation *inv = [NSInvocation invocationWithMethodSignature:[delegate methodSignatureForSelector:selector]];
@@ -43,6 +53,7 @@
             }
             [inv invoke];
             args = nil;
+        }
         }
     }
 }
