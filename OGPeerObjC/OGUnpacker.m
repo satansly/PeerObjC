@@ -131,7 +131,8 @@
 
 -(UInt16)unpack_uint16 {
     int bytes[2];
-    [[self read:2] getValue:&bytes];
+    //[[self read:2] getValue:&bytes];
+    [self read:2 buff:bytes];
     UInt16 uint16 =
     ((bytes[0] & 0xff) * 256) + (bytes[1] & 0xff);
     _index += 2;
@@ -141,7 +142,8 @@
 
 -(UInt32)unpack_uint32 {
     int bytes[4];
-    [[self read:4] getValue:&bytes];
+    //[[self read:4] getValue:&bytes];
+    [self read:4 buff:bytes];
     UInt32 uint32 =
     ((bytes[0]  * 256 +
       bytes[1]) * 256 +
@@ -154,7 +156,8 @@
 
 -(UInt64)unpack_uint64 {
     int bytes[8];
-    [[self read:8] getValue:&bytes];
+    //[[self read:8] getValue:&bytes];
+    [self read:8 buff:bytes];
     UInt64 uint64 =
     ((((((bytes[0]  * 256 +
           bytes[1]) * 256 +
@@ -272,17 +275,17 @@
     
 }
 
--(NSValue *)read:(uint)length {
+-(void)read:(uint)length buff:(int *)buf{
     
     int j = _index;
-    int sub[length];
+    //int sub[length];
     if (j + length <= _length) {
         for(int i = 0; i < length; j++,i++) {
-            sub[i] = _dataView[j];
-            NSLog(@"%i",sub[i]);
+            buf[i] = _dataView[j];
+            NSLog(@"%i",buf[i]);//sub[i]);
         }
-        NSValue * val = [NSValue value:&sub withObjCType:@encode(int[])];
-        return val;//send;//[_dataBuffer subdataWithRange:NSMakeRange(_index, length)];
+        //NSValue * val = [NSValue valueWithPointer:&sub];//[NSValue value:&sub withObjCType:@encode(int[])];
+        //return &sub;//send;//[NSValue valueWithBytes:(__bridge const void * _Nonnull)([_dataBuffer subdataWithRange:NSMakeRange(_index, length)]) objCType:@encode(NSData)];
     } else {
         DDLogError(@"BinaryPackFailure: read index out of range");
         @throw  [NSError errorWithLocalizedDescription:@"BinaryPackFailure: read index out of range"];

@@ -44,10 +44,10 @@
 }
 
 -(void)setupRendererViews {
-    _videoView = [[RTCEAGLVideoView alloc] initWithFrame:self.bounds];
+    _videoView = [[RTCEAGLVideoView alloc] initWithFrame:CGRectMake(0, 0, self.bounds.size.height * (9.0/16.0), self.bounds.size.height)];
     _videoView.backgroundColor = [UIColor clearColor];
     _videoView.delegate = self;
-    _videoView.contentMode = UIViewContentModeScaleToFill;
+    _videoView.contentMode = UIViewContentModeScaleAspectFill;
     _videoView.transform = CGAffineTransformMakeScale(-1, 1);
     [self addSubview:_videoView];
     
@@ -119,10 +119,9 @@
 - (void)updateVideoViewLayout
 {
     DDLogDebug(@"Trying to update video view frame, this may not work in views with autolayout");
-    CGSize defaultAspectRatio = CGSizeMake(4, 3);
+    CGSize defaultAspectRatio = CGSizeMake(9, 16);
     CGSize aspectRatio = CGSizeEqualToSize(_videoSize, CGSizeZero) ? defaultAspectRatio : _videoSize;
-    
-    CGRect videoFrame = AVMakeRectWithAspectRatioInsideRect(aspectRatio, self.bounds);
+    CGRect videoFrame = AVMakeRectWithAspectRatioInsideRect(aspectRatio, CGRectMake(0, 0, self.bounds.size.height * aspectRatio.width/aspectRatio.height , self.bounds.size.height));
     _videoView.frame = videoFrame;
     
 }
