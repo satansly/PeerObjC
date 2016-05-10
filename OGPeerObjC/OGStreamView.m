@@ -35,6 +35,8 @@
     return self;
 }
 
+
+
 -(void)setStream:(RTCMediaStream *)stream {
     NSAssert(stream != nil,@"Stream object provided to stream view is nil");
     _stream = stream;
@@ -44,6 +46,7 @@
 }
 
 -(void)setupRendererViews {
+        DDLogDebug(@"Setting up renderers");
     _videoView = [[RTCEAGLVideoView alloc] initWithFrame:CGRectMake(0, 0, self.bounds.size.height * (9.0/16.0), self.bounds.size.height)];
     _videoView.backgroundColor = [UIColor clearColor];
     _videoView.delegate = self;
@@ -74,10 +77,12 @@
     DDLogDebug(@"Removing renderers");
     for(RTCVideoTrack * track in _stream.videoTracks) {
         [track removeRenderer:_videoView];
+        [track setDelegate:nil];
     }
     [_videoView renderFrame:nil];
     DDLogDebug(@"Removing video view");
     if(_videoView) {
+        _videoView.delegate = nil;
         [_videoView removeFromSuperview];
         _videoView = nil;
     }
@@ -124,6 +129,10 @@
     CGRect videoFrame = AVMakeRectWithAspectRatioInsideRect(aspectRatio, CGRectMake(0, 0, self.bounds.size.height * aspectRatio.width/aspectRatio.height , self.bounds.size.height));
     _videoView.frame = videoFrame;
     
+}
+- (void)dealloc{
+    [self removeRendererViews];
+    _stream = nil;
 }
 
 

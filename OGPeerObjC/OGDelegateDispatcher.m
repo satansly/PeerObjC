@@ -57,4 +57,8 @@
         }
     }
 }
+-(void)dealloc{
+    [self.delegates removeAllObjects];
+    self.delegates = nil;
+}
 @end

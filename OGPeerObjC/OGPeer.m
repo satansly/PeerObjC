@@ -174,6 +174,8 @@
         }
     }];
     [self.socket on:@"close" notify:^{
+        self.socket.delegate = nil;
+        self.socket = nil;
         if(!_disconnected) {
             [self abort:@"socket-closed" message:@"Underlying socket is already closed."];
         }
@@ -572,6 +574,8 @@
         _open = false;
         if (_socket) {
             [_socket close];
+            _socket.delegate = nil;
+            _socket = nil;
         }
         [self emit:@"disconnected" data:_identifier];
         [self perform:@selector(peer:didDisconnectPeer:) withArgs:@[self,_identifier]];

@@ -237,7 +237,7 @@
 +(OGMessage *)leaveWithConnection:(OGConnection *)connection {
     NSAssert(connection != nil, @"Connection cannot be nil");
     OGMessage * message = [[OGMessage alloc] init];
-    message.type = OGMessageTypeCandidate;
+    message.type = OGMessageTypeLeave;
     message.source = connection.provider.identifier;
     message.destination = connection.peer;
     

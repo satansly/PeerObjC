@@ -196,6 +196,7 @@
     
     if (pc && pc.signalingState != RTCSignalingClosed) {
         [pc close];
+        [pc setDelegate:nil];
     }
     connection.peerConnection = nil;
 }
